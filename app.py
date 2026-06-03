@@ -242,6 +242,11 @@ def extract_pdf_data(pdf_path):
         print(f"PDF parse error: {e}")
     return data
 
+def _row_to_dict(r):
+    if isinstance(r, dict):
+        return dict(r)
+    return {k: v for k, v in zip(r.keys(), r)}
+
 @app.route('/')
 def index():
     q = request.args.get('q', '').strip()
@@ -254,7 +259,12 @@ def index():
             ).fetchall()
         else:
             records = db.execute('SELECT * FROM records ORDER BY created_at DESC').fetchall()
-    return render_template('index.html', records=records, q=q)
+    enriched = []
+    for r in records:
+        rec = _row_to_dict(r)
+        rec['paid'] = int(rec['paid']) if rec.get('paid') is not None else 0
+        enriched.append(rec)
+    return render_template('index.html', records=enriched, q=q)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
