@@ -18,35 +18,58 @@ except ImportError:
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
+class PgResult:
+    def __init__(self, cur):
+        self._cur = cur
+    def fetchone(self):
+        row = self._cur.fetchone()
+        if row is None:
+            return None
+        cols = [d[0] for d in self._cur.description]
+        return dict(zip(cols, row))
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        if not rows:
+            return []
+        cols = [d[0] for d in self._cur.description]
+        return [dict(zip(cols, r)) for r in rows]
+
 class DB:
     def __init__(self):
         self.is_pg = bool(DATABASE_URL)
         if self.is_pg:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-            self.conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+            from urllib.parse import urlparse
+            import pg8000.dbapi
+            u = urlparse(DATABASE_URL)
+            self._conn = pg8000.dbapi.connect(
+                host=u.hostname, port=u.port or 5432,
+                database=u.path[1:], user=u.username, password=u.password
+            )
         else:
-            self.conn = sqlite3.connect(DB_PATH)
-            self.conn.row_factory = sqlite3.Row
+            self._conn = sqlite3.connect(DB_PATH)
+            self._conn.row_factory = sqlite3.Row
 
     def execute(self, sql, params=None):
         if self.is_pg:
             sql = sql.replace('?', '%s')
-        if params:
-            return self.conn.execute(sql, params)
-        return self.conn.execute(sql)
+        if self.is_pg:
+            cur = self._conn.cursor()
+            cur.execute(sql, params or ())
+            return PgResult(cur)
+        else:
+            if params:
+                return self._conn.execute(sql, params)
+            return self._conn.execute(sql)
 
     def commit(self):
-        self.conn.commit()
+        self._conn.commit()
 
     def close(self):
-        self.conn.close()
+        self._conn.close()
 
     def insert_id(self, sql, params=None):
         if self.is_pg:
-            sql = sql.replace('?', '%s') + ' RETURNING id'
-            cur = self.execute(sql, params)
-            row = cur.fetchone()
+            row = self.execute(sql + ' RETURNING id', params).fetchone()
             return row['id']
         else:
             cur = self.execute(sql, params)
@@ -78,10 +101,6 @@ def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            try:
-                db.execute("ALTER TABLE records ADD COLUMN IF NOT EXISTS mobile TEXT")
-            except Exception:
-                pass
         else:
             db.execute('''
                 CREATE TABLE IF NOT EXISTS records (

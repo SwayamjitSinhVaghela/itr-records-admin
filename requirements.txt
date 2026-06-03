@@ -1,4 +1,4 @@
 flask>=3.0
 pdfplumber>=0.11
 gunicorn>=23.0
-psycopg2-binary>=2.9
+pg8000>=1.31
