@@ -99,8 +99,7 @@ def init_db():
                     mobile TEXT,
                     fee_amount DOUBLE PRECISION DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    paid INTEGER DEFAULT 0
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
         else:
@@ -114,17 +113,20 @@ def init_db():
                     mobile TEXT,
                     fee_amount REAL DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TEXT DEFAULT (datetime('now','localtime')),
-                    paid INTEGER DEFAULT 0
+                    created_at TEXT DEFAULT (datetime('now','localtime'))
                 )
             ''')
             try:
                 db.execute("ALTER TABLE records ADD COLUMN mobile TEXT")
             except sqlite3.OperationalError:
                 pass
+        # add paid column if missing (both pg and sqlite)
+        try:
+            db.execute("ALTER TABLE records ADD COLUMN IF NOT EXISTS paid INTEGER DEFAULT 0")
+        except:
             try:
                 db.execute("ALTER TABLE records ADD COLUMN paid INTEGER DEFAULT 0")
-            except sqlite3.OperationalError:
+            except:
                 pass
 init_db()
 
