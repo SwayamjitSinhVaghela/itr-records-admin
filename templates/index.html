@@ -27,6 +27,7 @@
 <th>Fee</th>
 <th>Source</th>
 <th>Date</th>
+<th>Paid</th>
 <th></th>
 </tr>
 </thead>
@@ -50,6 +51,7 @@
 <td>{% if r.fee_amount %}{{ r.fee_amount|inr }}{% else %}<span class="sub">-</span>{% endif %}</td>
 <td>{% if r.pdf_filename %}<span class="badge badge-pdf">PDF</span>{% else %}Manual{% endif %}</td>
 <td class="sub">{{ r.created_at[:10] if r.created_at else '-' }}</td>
+<td><input type="checkbox" class="paid-cb" data-id="{{ r.id }}" {{ 'checked' if r.paid else '' }}></td>
 <td class="actions">
 <a href="/edit/{{ r.id }}" class="edit">Edit</a>
 <a href="/delete/{{ r.id }}" class="del" onclick="return confirm('Delete this record?')">Del</a>
@@ -90,6 +92,10 @@
 </div>
 
 <style>
+.paid-cb{width:22px;height:22px;cursor:pointer;accent-color:#16a34a;border-radius:5px;transition:transform .15s}
+.paid-cb:checked{transform:scale(1.15)}
+.paid-cb:hover{transform:scale(1.08)}
+
 #dndOverlay{position:fixed;inset:0;z-index:9999;background:rgba(10,10,10,.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;transition:opacity .2s}
 #dndOverlay.show{display:flex;animation:fadeIn .2s ease}
 .dnd-inner{text-align:center;padding:40px}
@@ -137,6 +143,14 @@
         form.submit();
       }
     }
+  });
+  })();
+
+  // paid checkbox toggle
+  document.querySelectorAll('.paid-cb').forEach(cb => {
+    cb.addEventListener('change', function() {
+      fetch('/api/toggle-paid/' + this.dataset.id, { method: 'POST' });
+    });
   });
 })();
 </script>

@@ -1,6 +1,7 @@
 import os, re, sqlite3
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+import json
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()
@@ -98,7 +99,8 @@ def init_db():
                     mobile TEXT,
                     fee_amount DOUBLE PRECISION DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    paid INTEGER DEFAULT 0
                 )
             ''')
         else:
@@ -112,11 +114,16 @@ def init_db():
                     mobile TEXT,
                     fee_amount REAL DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TEXT DEFAULT (datetime('now','localtime'))
+                    created_at TEXT DEFAULT (datetime('now','localtime')),
+                    paid INTEGER DEFAULT 0
                 )
             ''')
             try:
                 db.execute("ALTER TABLE records ADD COLUMN mobile TEXT")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                db.execute("ALTER TABLE records ADD COLUMN paid INTEGER DEFAULT 0")
             except sqlite3.OperationalError:
                 pass
 init_db()
@@ -305,6 +312,16 @@ def edit(rid):
             return redirect(url_for('index'))
     return render_template('edit_record.html', record=r)
 
+@app.route('/api/toggle-paid/<int:rid>', methods=['POST'])
+def toggle_paid(rid):
+    with get_db() as db:
+        r = db.execute('SELECT paid FROM records WHERE id=?', (rid,)).fetchone()
+        if not r:
+            return jsonify({'error': 'Not found'}), 404
+        new = 0 if r['paid'] else 1
+        db.execute('UPDATE records SET paid=? WHERE id=?', (new, rid))
+    return jsonify({'success': True, 'paid': new})
+
 @app.route('/delete/<int:rid>')
 def delete(rid):
     with get_db() as db:
@@ -324,10 +341,10 @@ def export_csv():
         records = db.execute('SELECT * FROM records ORDER BY created_at DESC').fetchall()
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(['ID','PAN','Name','Taxes Paid','Refund','Mobile','Fee Amount','Source','Date'])
+    w.writerow(['ID','PAN','Name','Taxes Paid','Refund','Mobile','Fee Amount','Source','Date','Paid'])
     for r in records:
         src = 'PDF' if r['pdf_filename'] else 'Manual'
-        w.writerow([r['id'], r['pan'], r['name'], r['taxes_paid'], r['refund_amount'], r['mobile'], r['fee_amount'], src, r['created_at']])
+        w.writerow([r['id'], r['pan'], r['name'], r['taxes_paid'], r['refund_amount'], r['mobile'], r['fee_amount'], src, r['created_at'], 'Yes' if r['paid'] else 'No'])
     from flask import Response
     return Response(out.getvalue(), mimetype='text/csv', headers={'Content-Disposition':'attachment;filename=itr_records.csv'})
 
