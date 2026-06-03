@@ -150,6 +150,16 @@ def inr_format(value):
             rest = rest[:-2]
     return ('-' if negative else '') + '₹ ' + res + dec_part
 
+@app.template_filter('wa_url')
+def wa_url_filter(rec):
+    from urllib.parse import quote
+    mobile = str(rec.get('mobile', '') or '').strip()
+    if len(mobile) < 6:
+        return ''
+    amount = abs(float(rec.get('refund_amount', 0) or 0))
+    msg = f'आपके IT रिटर्न की राशि ₹{amount:,.0f} बकाया है। कृपया भुगतान करें।'
+    return f'https://wa.me/91{mobile}?text={quote(msg)}'
+
 def _clean_name(raw):
     raw = raw.strip().rstrip(',;.:')
     raw = re.sub(r'^(Name|Assessee|Assesse|Taxpayer)\s*(of\s*(the\s*)?)?\s*', '', raw, flags=re.IGNORECASE).strip()

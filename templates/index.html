@@ -53,12 +53,15 @@
 <td class="sub">{{ r.created_at[:10] if r.created_at else '-' }}</td>
 <td>
 <select class="status-sel" data-id="{{ r.id }}">
-  <option value="0" {{ 'selected' if r.paid == 0 or r.paid is none else '' }}>Unpaid</option>
-  <option value="1" {{ 'selected' if r.paid == 1 else '' }}>Paid</option>
-  <option value="2" {{ 'selected' if r.paid == 2 else '' }}>Partial</option>
+  <option value="0" {{ 'selected' if (r.paid|int) == 0 else '' }}>Unpaid</option>
+  <option value="1" {{ 'selected' if (r.paid|int) == 1 else '' }}>Paid</option>
+  <option value="2" {{ 'selected' if (r.paid|int) == 2 else '' }}>Partial</option>
 </select>
 </td>
 <td class="actions">
+{% if r.mobile and r.mobile|length > 5 %}
+<a href="{{ r|wa_url }}" target="_blank" class="wa-btn" title="WhatsApp Reminder">💬</a>
+{% endif %}
 <a href="/edit/{{ r.id }}" class="edit">Edit</a>
 <a href="/delete/{{ r.id }}" class="del" onclick="return confirm('Delete this record?')">Del</a>
 </td>
@@ -103,6 +106,8 @@
 .status-sel[data-val="1"]{background-color:#dcfce7;border-color:#16a34a;color:#166534}
 .status-sel[data-val="2"]{background-color:#fef3c7;border-color:#d97706;color:#92400e}
 .status-sel[data-val="0"]{background-color:#fef2f2;border-color:#fca5a5;color:#991b1b}
+.wa-btn{text-decoration:none;font-size:1rem;padding:4px 8px;border-radius:6px;transition:all .15s;display:inline-block}
+.wa-btn:hover{background:rgba(37,211,102,.15);transform:scale(1.1)}
 
 #dndOverlay{position:fixed;inset:0;z-index:9999;background:rgba(10,10,10,.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;transition:opacity .2s}
 #dndOverlay.show{display:flex;animation:fadeIn .2s ease}
