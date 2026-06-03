@@ -314,15 +314,18 @@ def edit(rid):
             return redirect(url_for('index'))
     return render_template('edit_record.html', record=r)
 
-@app.route('/api/toggle-paid/<int:rid>', methods=['POST'])
-def toggle_paid(rid):
+@app.route('/api/set-status/<int:rid>', methods=['POST'])
+def set_status(rid):
+    data = request.get_json(silent=True) or {}
+    val = data.get('status', 0)
+    if val not in (0, 1, 2):
+        return jsonify({'error': 'Invalid status'}), 400
     with get_db() as db:
-        r = db.execute('SELECT paid FROM records WHERE id=?', (rid,)).fetchone()
+        r = db.execute('SELECT id FROM records WHERE id=?', (rid,)).fetchone()
         if not r:
             return jsonify({'error': 'Not found'}), 404
-        new = 0 if r['paid'] else 1
-        db.execute('UPDATE records SET paid=? WHERE id=?', (new, rid))
-    return jsonify({'success': True, 'paid': new})
+        db.execute('UPDATE records SET paid=? WHERE id=?', (val, rid))
+    return jsonify({'success': True, 'status': val})
 
 @app.route('/delete/<int:rid>')
 def delete(rid):
@@ -343,10 +346,11 @@ def export_csv():
         records = db.execute('SELECT * FROM records ORDER BY created_at DESC').fetchall()
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(['ID','PAN','Name','Taxes Paid','Refund','Mobile','Fee Amount','Source','Date','Paid'])
+    w.writerow(['ID','PAN','Name','Taxes Paid','Refund','Mobile','Fee Amount','Source','Date','Status'])
+    labels = {0:'Unpaid',1:'Paid',2:'Partial'}
     for r in records:
         src = 'PDF' if r['pdf_filename'] else 'Manual'
-        w.writerow([r['id'], r['pan'], r['name'], r['taxes_paid'], r['refund_amount'], r['mobile'], r['fee_amount'], src, r['created_at'], 'Yes' if r['paid'] else 'No'])
+        w.writerow([r['id'], r['pan'], r['name'], r['taxes_paid'], r['refund_amount'], r['mobile'], r['fee_amount'], src, r['created_at'], labels.get(r['paid'],'Unpaid')])
     from flask import Response
     return Response(out.getvalue(), mimetype='text/csv', headers={'Content-Disposition':'attachment;filename=itr_records.csv'})
 
