@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:22px">
+  <a href="/upload" class="btn btn-primary">+ Upload PDF</a>
+  <a href="/add" class="btn btn-secondary">+ Add Manual</a>
+  <div style="flex:1;min-width:200px"></div>
+  <form method="GET" action="/" style="display:flex;gap:8px;align-items:center;margin:0">
+    <input name="q" placeholder="Search PAN, Name or Mobile..." value="{{ q }}" style="width:260px;padding:10px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:.85rem;background:#fafafa;transition:all .2s" onfocus="this.style.borderColor='#8b5cf6';this.style.boxShadow='0 0 0 3px rgba(139,92,246,.1)'" onblur="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+    <button type="submit" class="btn btn-secondary" style="padding:10px 18px">Search</button>
+    {% if q %}<a href="/" class="btn btn-secondary" style="padding:10px 16px">Clear</a>{% endif %}
+  </form>
+  <a href="/export" class="btn btn-secondary" style="padding:10px 18px">⬇ CSV</a>
+  <a href="/backup" class="btn btn-secondary" style="padding:10px 18px">💾 Backup</a>
+</div>
+
+{% if records %}
+<div style="overflow-x:auto">
+<table>
+<thead>
+<tr>
+<th style="width:44px">#</th>
+<th>PAN</th>
+<th>Name</th>
+<th>Taxes Paid</th>
+<th>Refund</th>
+<th>Mobile</th>
+<th>Fee</th>
+<th>Source</th>
+<th>Date</th>
+<th style="width:120px"></th>
+</tr>
+</thead>
+<tbody>
+{% for r in records %}
+<tr>
+<td style="font-weight:700;color:var(--text-muted)">{{ r.id }}</td>
+<td>{% if r.pan %}<span class="badge badge-blue">{{ r.pan }}</span>{% else %}<span class="sub">-</span>{% endif %}</td>
+<td style="font-weight:600">{{ r.name or '-' }}</td>
+<td>{% if r.taxes_paid %}{{ r.taxes_paid|inr }}{% else %}<span class="sub">-</span>{% endif %}</td>
+<td>
+{% if r.refund_amount < 0 %}
+<span class="green">(-) {{ (-r.refund_amount)|inr }}</span>
+{% elif r.refund_amount > 0 %}
+<span class="red">(+) {{ r.refund_amount|inr }}</span>
+{% else %}
+<span class="sub">-</span>
+{% endif %}
+</td>
+<td>{{ r.mobile or '-' }}</td>
+<td>{% if r.fee_amount %}{{ r.fee_amount|inr }}{% else %}<span class="sub">-</span>{% endif %}</td>
+<td>{% if r.pdf_filename %}<span class="badge badge-pdf">PDF</span>{% else %}Manual{% endif %}</td>
+<td class="sub">{{ r.created_at[:10] if r.created_at else '-' }}</td>
+<td class="actions">
+<a href="/edit/{{ r.id }}" class="edit">Edit</a>
+<a href="/delete/{{ r.id }}" class="del" onclick="return confirm('Delete this record?')">Del</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">
+<div style="font-size:3rem;margin-bottom:12px">📋</div>
+{% if q %}
+<h2>No results for "{{ q }}"</h2>
+<p>Try searching by PAN, Name or Mobile number.</p>
+<br>
+<a href="/" class="btn btn-secondary">Clear Search</a>
+{% else %}
+<h2>No records yet</h2>
+<p>Upload a PDF acknowledgement or add a manual record to get started.</p>
+<br>
+<a href="/upload" class="btn btn-primary">Upload PDF</a>
+<a href="/add" class="btn btn-secondary" style="margin-left:8px">Add Manual</a>
+{% endif %}
+</div>
+{% endif %}
+{% endblock %}

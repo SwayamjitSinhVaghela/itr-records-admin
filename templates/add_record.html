@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-sm">
+<h2 style="font-size:1.2rem;margin-bottom:24px;color:var(--text)">Add Manual Record</h2>
+<form method="POST">
+<div class="form-row">
+<div>
+<label>PAN</label>
+<input name="pan" placeholder="AAAAA1234A" maxlength="10">
+</div>
+<div>
+<label>Name</label>
+<input name="name" placeholder="Full name">
+</div>
+</div>
+<div class="form-row">
+<div>
+<label>Taxes Paid (₹)</label>
+<input name="taxes_paid" type="number" step="0.01" placeholder="0.00">
+</div>
+<div>
+<label>Refund (₹)</label>
+<input name="refund_amount" type="number" step="0.01" placeholder="Use + or -">
+</div>
+</div>
+<div class="form-row">
+<div>
+<label>Mobile</label>
+<input name="mobile" placeholder="9876543210" maxlength="15">
+</div>
+<div>
+<label>Fee Amount (₹)</label>
+<input name="fee_amount" type="number" step="0.01" placeholder="0.00">
+</div>
+</div>
+<div style="display:flex;gap:12px;margin-top:8px">
+<button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;padding:14px">Save Record</button>
+<a href="/" class="btn btn-secondary" style="flex:1;justify-content:center;padding:14px">Cancel</a>
+</div>
+</form>
+</div>
+{% endblock %}

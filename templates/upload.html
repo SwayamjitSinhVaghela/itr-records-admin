@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-sm">
+<h2 style="font-size:1.2rem;margin-bottom:20px;color:var(--text)">Upload ITR Acknowledgement</h2>
+
+<form method="POST" enctype="multipart/form-data" id="uploadForm">
+  <div class="dropzone" id="dropzone">
+    <div class="dropzone-icon">📄</div>
+    <div class="dropzone-text">Drop your PDF here</div>
+    <div class="dropzone-sub">or tap to browse files</div>
+    <input type="file" name="pdf" accept=".pdf" id="fileInput">
+  </div>
+  <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:.95rem" id="uploadBtn">
+    Upload &amp; Extract
+  </button>
+</form>
+<a href="/" class="btn btn-secondary" style="margin-top:14px;width:100%;justify-content:center">Back to Dashboard</a>
+</div>
+
+{% if new_rec %}
+<div class="modal-overlay" id="reviewModal">
+<div class="modal">
+<h2>📋 Review Extracted Data</h2>
+
+<div class="extracted">
+  <div class="extracted-row"><span class="label">PAN</span><span class="value">{{ new_rec.pan or '-' }}</span></div>
+  <div class="extracted-row"><span class="label">Name</span><span class="value">{{ new_rec.name or '-' }}</span></div>
+  <div class="extracted-row"><span class="label">Taxes Paid</span><span class="value">{{ new_rec.taxes_paid|inr if new_rec.taxes_paid else '-' }}</span></div>
+  <div class="extracted-row"><span class="label">Refund</span><span class="value">
+    {% if new_rec.refund_amount < 0 %}
+      <span class="green">(-) {{ (-new_rec.refund_amount)|inr }}</span>
+    {% elif new_rec.refund_amount > 0 %}
+      <span class="red">(+) {{ new_rec.refund_amount|inr }}</span>
+    {% else %}
+      -
+    {% endif %}
+  </span></div>
+</div>
+
+<form method="POST" action="/finalize/{{ new_rec.id }}">
+  <div class="form-row">
+    <div>
+      <label>Mobile Number</label>
+      <input name="mobile" placeholder="9876543210" maxlength="15">
+    </div>
+    <div>
+      <label>Fee Amount (₹)</label>
+      <input name="fee_amount" type="number" step="0.01" placeholder="0.00">
+    </div>
+  </div>
+  <div class="btn-row">
+    <button type="submit" class="btn btn-primary">Save &amp; Go to Dashboard</button>
+    <a href="/delete/{{ new_rec.id }}" class="btn btn-danger" onclick="return confirm('Discard this record?')">Discard</a>
+  </div>
+</form>
+</div>
+</div>
+{% endif %}
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    document.getElementById('uploadForm').submit();
+  }
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) document.getElementById('uploadForm').submit();
+});
+</script>
+{% endblock %}

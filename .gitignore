@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.db
+backups/
+uploads/
+*.log
+*.err
+*.txt
+!requirements.txt
+env/
+venv/
+.venv/
