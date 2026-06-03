@@ -76,4 +76,68 @@
 {% endif %}
 </div>
 {% endif %}
+
+<form method="POST" action="/upload" enctype="multipart/form-data" id="dndForm" style="display:none">
+  <input type="file" name="pdf" accept=".pdf" id="dndInput">
+</form>
+
+<div id="dndOverlay">
+  <div class="dnd-inner">
+    <div class="dnd-icon">📄</div>
+    <div class="dnd-title">Drop your PDF here</div>
+    <div class="dnd-sub">to extract PAN, Name, Taxes &amp; Refund</div>
+  </div>
+</div>
+
+<style>
+#dndOverlay{position:fixed;inset:0;z-index:9999;background:rgba(10,10,10,.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;flex-direction:column;transition:opacity .2s}
+#dndOverlay.show{display:flex;animation:fadeIn .2s ease}
+.dnd-inner{text-align:center;padding:40px}
+.dnd-icon{font-size:4rem;margin-bottom:16px}
+.dnd-title{font-size:1.6rem;font-weight:700;color:#fff;margin-bottom:8px}
+.dnd-sub{font-size:.95rem;color:rgba(255,255,255,.5)}
+</style>
+
+<script>
+(function(){
+  const overlay = document.getElementById('dndOverlay');
+  const form = document.getElementById('dndForm');
+  const input = document.getElementById('dndInput');
+
+  ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+    document.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+  });
+
+  let dragCounter = 0;
+
+  document.addEventListener('dragenter', e => {
+    dragCounter++;
+    if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+      overlay.classList.add('show');
+    }
+  });
+
+  document.addEventListener('dragleave', e => {
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      overlay.classList.remove('show');
+    }
+  });
+
+  document.addEventListener('drop', e => {
+    dragCounter = 0;
+    overlay.classList.remove('show');
+    if (e.dataTransfer.files.length) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        form.submit();
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}
