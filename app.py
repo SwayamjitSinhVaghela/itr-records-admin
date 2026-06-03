@@ -342,18 +342,18 @@ def edit(rid):
             return redirect(url_for('index'))
     return render_template('edit_record.html', record=r)
 
-@app.route('/api/set-status/<int:rid>', methods=['POST'])
-def set_status(rid):
-    data = request.get_json(silent=True) or {}
-    val = data.get('status', 0)
-    if val not in (0, 1, 2):
-        return jsonify({'error': 'Invalid status'}), 400
+@app.route('/toggle-status/<int:rid>', methods=['POST'])
+def toggle_status(rid):
     with get_db() as db:
-        r = db.execute('SELECT id FROM records WHERE id=?', (rid,)).fetchone()
+        r = db.execute('SELECT paid FROM records WHERE id=?', (rid,)).fetchone()
         if not r:
-            return jsonify({'error': 'Not found'}), 404
-        db.execute('UPDATE records SET paid=? WHERE id=?', (val, rid))
-    return jsonify({'success': True, 'status': val})
+            flash('Not found.', 'error')
+            return redirect(url_for('index'))
+        current = int(r['paid'] or 0)
+        new_val = 0 if current else 1
+        db.execute('UPDATE records SET paid=? WHERE id=?', (new_val, rid))
+    flash('Status updated.', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/delete/<int:rid>')
 def delete(rid):
