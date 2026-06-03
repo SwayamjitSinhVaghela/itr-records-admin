@@ -153,10 +153,16 @@ def inr_format(value):
 @app.template_filter('wa_url')
 def wa_url_filter(rec):
     from urllib.parse import quote
-    mobile = str(rec.get('mobile', '') or '').strip()
+    try:
+        mobile = str(rec['mobile'] or '').strip()
+    except (KeyError, TypeError, AttributeError):
+        mobile = ''
     if len(mobile) < 6:
         return ''
-    amount = abs(float(rec.get('refund_amount', 0) or 0))
+    try:
+        amount = abs(float(rec['refund_amount'] or 0))
+    except (KeyError, TypeError, AttributeError):
+        amount = 0
     msg = f'आपके IT रिटर्न की राशि ₹{amount:,.0f} बकाया है। कृपया भुगतान करें।'
     return f'https://wa.me/91{mobile}?text={quote(msg)}'
 
