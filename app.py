@@ -99,7 +99,8 @@ def init_db():
                     mobile TEXT,
                     fee_amount DOUBLE PRECISION DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    paid INTEGER DEFAULT 0
                 )
             ''')
         else:
@@ -113,7 +114,8 @@ def init_db():
                     mobile TEXT,
                     fee_amount REAL DEFAULT 0,
                     pdf_filename TEXT,
-                    created_at TEXT DEFAULT (datetime('now','localtime'))
+                    created_at TEXT DEFAULT (datetime('now','localtime')),
+                    paid INTEGER DEFAULT 0
                 )
             ''')
             try:

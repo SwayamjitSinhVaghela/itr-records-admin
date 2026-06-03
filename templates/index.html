@@ -168,8 +168,9 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({status: parseInt(this.value)})
       }).then(r => r.json()).then(d => {
-        if (d.success) this.dataset.val = d.status;
-      });
+        if (d.success) { this.dataset.val = d.status; }
+        else { console.error('Status save failed:', d); }
+      }).catch(e => console.error('Status fetch error:', e));
     });
   });
 })();
